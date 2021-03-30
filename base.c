@@ -101,7 +101,7 @@ mc_graph_t *mc_read(const char *fn)
 	g->h_name = mc_s2i_init();
 	while (ks_getuntil(ks, KS_SEP_LINE, &str, &dret) >= 0) {
 		char *p, *q, *u1 = 0, *u2 = 0;
-		int32_t i, w;
+		int32_t i, w = 0;
 		for (i = 0, p = q = str.s;; ++p) {
 			if (*p == '\t' || *p == 0) {
 				int c = *p;
@@ -140,6 +140,6 @@ void mc_destroy(mc_graph_t *g)
 	uint32_t i;
 	for (i = 0; i < g->n_node; ++i) free(g->node[i].name);
 	free(g->node); free(g->edge); free(g->idx);
-	mc_s2i_destroy(g->h_name);
+	mc_s2i_destroy((mc_s2i_t*)g->h_name);
 	free(g);
 }
