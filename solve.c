@@ -133,9 +133,10 @@ int64_t mc_score(const mc_graph_t *g, mc_svaux_t *b, int32_t topn)
 {
 	uint32_t i;
 	int64_t z = 0;
-	for (i = 0; i < g->n_node; ++i) {
-		uint32_t o = g->idx[i] >> 32;
-		uint32_t j, n = (uint32_t)g->idx[i];
+	for (i = 0; i < b->cc_size; ++i) {
+		uint32_t k = (uint32_t)g->cc[b->cc_off + i];
+		uint32_t o = g->idx[k] >> 32;
+		uint32_t j, n = (uint32_t)g->idx[k];
 		if (topn > 0) { // only evaluate edges with large abs weight
 			for (j = 0; j < n; ++j) {
 				int32_t w = g->edge[o + j].w;
