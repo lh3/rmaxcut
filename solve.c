@@ -145,12 +145,12 @@ int64_t mc_score(const mc_graph_t *g, mc_svaux_t *b, int32_t topn)
 			radix_sort_mc64(b->srt, b->srt + n);
 			for (j = 0; j < n && j < topn; ++j) {
 				const mc_edge_t *e = &g->edge[(uint32_t)b->srt[j]];
-				z += g->node[e->x>>32].s * g->node[(uint32_t)e->x].s * e->w;
+				z += -b->s[e->x>>32] * b->s[(uint32_t)e->x] * e->w;
 			}
 		} else { // standard max-cut
 			for (j = 0; j < n; ++j) {
 				const mc_edge_t *e = &g->edge[o + j];
-				z += g->node[e->x>>32].s * g->node[(uint32_t)e->x].s * e->w;
+				z += -b->s[e->x>>32] * b->s[(uint32_t)e->x] * e->w;
 			}
 		}
 	}
@@ -213,8 +213,9 @@ static int64_t mc_optimize_local(const mc_opt_t *opt, const mc_graph_t *g, mc_sv
 			uint32_t k = b->cc_node[i];
 			uint32_t o = g->idx[k] >> 32;
 			uint32_t n = (uint32_t)g->idx[k], j;
-			uint32_t z[2];
+			int64_t z[2];
 			int8_t s;
+			z[0] = z[1] = 0;
 			if (opt->topn > 0) {
 				for (j = 0; j < n; ++j) {
 					int32_t w = g->edge[o + j].w;
@@ -222,15 +223,15 @@ static int64_t mc_optimize_local(const mc_opt_t *opt, const mc_graph_t *g, mc_sv
 					b->srt[j] = (uint64_t)((uint32_t)-1 - w) << 32 | (o + j);
 				}
 				radix_sort_mc64(b->srt, b->srt + n);
-				for (j = 0, z[0] = z[1] = 0; j < n && j < opt->topn; ++j) {
+				for (j = 0; j < n && j < opt->topn; ++j) {
 					const mc_edge_t *e = &g->edge[(uint32_t)b->srt[j]];
-					if (b->s[e->x>>32] > 0) z[0] += e->w;
+					if (b->s[(uint32_t)e->x] > 0) z[0] += e->w;
 					else if (b->s[(uint32_t)e->x] < 0) z[1] += e->w;
 				}
 			} else {
-				for (j = 0, z[0] = z[1] = 0; j < n; ++j) {
+				for (j = 0; j < n; ++j) {
 					const mc_edge_t *e = &g->edge[o + j];
-					if (b->s[e->x>>32] > 0) z[0] += e->w;
+					if (b->s[(uint32_t)e->x] > 0) z[0] += e->w;
 					else if (b->s[(uint32_t)e->x] < 0) z[1] += e->w;
 				}
 			}
