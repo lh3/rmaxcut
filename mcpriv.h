@@ -13,4 +13,6 @@
 		MC_REALLOC((a), (m)); \
 	} while (0)
 
+void radix_sort_mc64(uint64_t*, uint64_t*);
+
 #endif

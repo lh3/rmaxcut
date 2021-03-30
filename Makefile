@@ -2,7 +2,7 @@ CC=			gcc
 CFLAGS=		-g -Wall -Wc++-compat -std=c99 -O2
 CPPFLAGS=
 INCLUDES=
-OBJS=		base.o sys.o
+OBJS=		base.o sys.o solve.o
 PROG=		rmaxcut
 LIBS=		-lz -lpthread -lm
 
@@ -32,4 +32,5 @@ depend:
 
 base.o: mcpriv.h rmaxcut.h kseq.h khashl.h ksort.h
 main.o: ketopt.h rmaxcut.h
+solve.o: mcpriv.h rmaxcut.h
 sys.o: mcpriv.h rmaxcut.h

@@ -11,6 +11,8 @@ KHASHL_MAP_INIT(, mc_s2i_t, mc_s2i, const char*, int32_t, kh_hash_str, kh_eq_str
 #include "ksort.h"
 #define mc_edge_key(e) ((e).x)
 KRADIX_SORT_INIT(mce, mc_edge_t, mc_edge_key, 8)
+#define mc_generic_key(x) (x)
+KRADIX_SORT_INIT(mc64, uint64_t, mc_generic_key, 8)
 
 int mc_verbose = 3;
 

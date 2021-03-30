@@ -18,14 +18,20 @@ typedef struct {
 	mc_node_t *node;
 	uint32_t n_edge, m_edge;
 	mc_edge_t *edge;
-	uint64_t *idx;
+	uint64_t *idx; // index to find edges
+	uint64_t *cc; // connected components
 	void *h_name;
 } mc_graph_t;
+
+typedef struct {
+	int32_t topn;
+} mc_opt_t;
 
 extern int mc_verbose;
 
 mc_graph_t *mc_read(const char *fn);
 void mc_destroy(mc_graph_t *g);
+void mc_solve(mc_graph_t *g);
 
 double mc_realtime(void);
 
