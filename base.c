@@ -124,7 +124,7 @@ mc_graph_t *mc_read(const char *fn)
 	mc_sort(g);
 	mc_merge(g);
 	if (mc_verbose >= 3)
-		fprintf(stderr, "[%s] read %u nodes and %u edges\n", __func__, g->n_node, g->n_edge);
+		fprintf(stderr, "[%s::%.3f] read %u nodes and %u edges\n", __func__, mc_realtime(), g->n_node, g->n_edge);
 	mc_index(g);
 	return g;
 }

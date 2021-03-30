@@ -27,4 +27,6 @@ extern int mc_verbose;
 mc_graph_t *mc_read(const char *fn);
 void mc_destroy(mc_graph_t *g);
 
+double mc_realtime(void);
+
 #endif
