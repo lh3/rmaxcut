@@ -25,13 +25,18 @@ typedef struct {
 
 typedef struct {
 	int32_t topn;
+	int32_t n_perturb;
+	double f_perturb;
+	uint64_t seed;
 } mc_opt_t;
 
 extern int mc_verbose;
 
 mc_graph_t *mc_read(const char *fn);
 void mc_destroy(mc_graph_t *g);
-void mc_solve(mc_graph_t *g);
+
+void mc_opt_init(mc_opt_t *opt);
+void mc_solve(const mc_opt_t *opt, mc_graph_t *g);
 
 double mc_realtime(void);
 
