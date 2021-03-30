@@ -47,22 +47,23 @@ void mc_sort(mc_graph_t *g)
 	radix_sort_mce(g->edge, g->edge + g->n_edge);
 }
 
-void mc_merge(mc_graph_t *g) // MUST BE sorted
+void mc_merge_dup(mc_graph_t *g) // MUST BE sorted
 {
 	uint32_t i, j, k, st;
 	for (st = 0, i = 1, k = 0; i <= g->n_edge; ++i) {
 		if (i == g->n_edge || g->edge[i].x != g->edge[st].x) {
 			if (i - st > 1) {
-				uint32_t max_w = 0;
-				int32_t sign_w = 0;
+				int32_t max_w = 0, min_w = 0, w;
 				for (j = st; j < i; ++j) {
 					int32_t w = g->edge[j].w;
-					w = w < 0? -w : w;
-					if (w > max_w)
-						max_w = w, sign_w = g->edge[j].w;
+					max_w = max_w > w? max_w : w;
+					min_w = min_w < w? min_w : w;
 				}
+				if (max_w > 0 && min_w > 0) w = max_w;
+				else if (max_w < 0 && min_w < 0) w = min_w;
+				else w = max_w + min_w;
 				g->edge[k] = g->edge[st];
-				g->edge[k++].w = sign_w;
+				g->edge[k++].w = w;
 			} else g->edge[k++] = g->edge[st];
 			st = i;
 		}
@@ -128,7 +129,7 @@ mc_graph_t *mc_read(const char *fn)
 	ks_destroy(ks);
 	gzclose(fp);
 	mc_sort(g);
-	mc_merge(g);
+	mc_merge_dup(g);
 	if (mc_verbose >= 3)
 		fprintf(stderr, "[%s::%.3f] read %u nodes and %u edges\n", __func__, mc_realtime(), g->n_node, g->n_edge);
 	mc_index(g);
