@@ -50,14 +50,18 @@ void mc_merge(mc_graph_t *g) // MUST BE sorted
 	uint32_t i, j, k, st;
 	for (st = 0, i = 1, k = 0; i <= g->n_edge; ++i) {
 		if (i == g->n_edge || g->edge[i].x != g->edge[st].x) {
-			int64_t w = 0;
 			if (i - st > 1) {
-				for (j = st; j < i; ++j)
-					w += g->edge[j].w;
-				w = (int64_t)((double)w / (i - st) + .499);
-			} else w = g->edge[j].w;
-			g->edge[k] = g->edge[st];
-			g->edge[k++].w = w;
+				uint32_t max_w = 0;
+				int32_t sign_w = 0;
+				for (j = st; j < i; ++j) {
+					int32_t w = g->edge[j].w;
+					w = w < 0? -w : w;
+					if (w > max_w)
+						max_w = w, sign_w = g->edge[j].w;
+				}
+				g->edge[k] = g->edge[st];
+				g->edge[k++].w = sign_w;
+			} else g->edge[k++] = g->edge[st];
 			st = i;
 		}
 	}
@@ -131,6 +135,8 @@ mc_graph_t *mc_read(const char *fn)
 
 void mc_destroy(mc_graph_t *g)
 {
+	uint32_t i;
+	for (i = 0; i < g->n_node; ++i) free(g->node[i].name);
 	free(g->node); free(g->edge); free(g->idx);
 	mc_s2i_destroy(g->h_name);
 	free(g);

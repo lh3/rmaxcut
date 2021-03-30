@@ -20,5 +20,6 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	g = mc_read(argv[o.ind]);
+	mc_destroy(g);
 	return 0;
 }
