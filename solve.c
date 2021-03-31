@@ -281,6 +281,28 @@ uint32_t mc_solve_cc(const mc_opt_t *opt, const mc_graph_t *g, mc_svaux_t *b, ui
 	return n_iter;
 }
 
+void mc_write_info(mc_graph_t *g, mc_svaux_t *b)
+{
+	uint32_t i;
+	for (i = 0; i < g->n_node; ++i) {
+		mc_node_t *t = &g->node[i];
+		uint32_t o = g->idx[i] >> 32;
+		uint32_t j, n = (uint32_t)g->idx[i];
+		t->s = b->s[i];
+		t->w[0][0] = t->w[0][1] = t->w[1][0] = t->w[1][1] = 0;
+		for (j = 0; j < n; ++j) {
+			mc_edge_t *e = &g->edge[o + j];
+			if (b->s[(uint32_t)e->x] > 0) {
+				if (e->w > 0) t->w[0][0] += e->w;
+				else if (e->w < 0) t->w[0][1] += e->w;
+			} else if (b->s[(uint32_t)e->x] < 0) {
+				if (e->w > 0) t->w[1][0] += e->w;
+				else if (e->w < 0) t->w[1][1] += e->w;
+			}
+		}
+	}
+}
+
 void mc_solve(const mc_opt_t *opt, mc_graph_t *g)
 {
 	uint32_t st, i;
@@ -293,5 +315,22 @@ void mc_solve(const mc_opt_t *opt, mc_graph_t *g)
 			st = i;
 		}
 	}
+	mc_write_info(g, b);
 	mc_svaux_destroy(b);
+}
+
+void mc_print_cut(FILE *fp, const mc_graph_t *g)
+{
+	uint32_t i;
+	for (i = 0; i < g->n_node; ++i) {
+		const mc_node_t *t = &g->node[i];
+		fprintf(fp, "N\t%s\t%d\t%d\t%d\t%d\t%d\n", t->name, t->s,
+				t->w[0][0], t->w[0][1], t->w[1][0], t->w[1][1]);
+	}
+	for (i = 0; i < g->n_edge; ++i) {
+		const mc_edge_t *e = &g->edge[i];
+		const mc_node_t *t1 = &g->node[e->x>>32];
+		const mc_node_t *t2 = &g->node[(uint32_t)e->x];
+		fprintf(fp, "E\t%s\t%s\t%d\t%d\t%d\n", t1->name, t2->name, e->w, t1->s, t2->s);
+	}
 }

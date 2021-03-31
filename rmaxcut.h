@@ -2,9 +2,11 @@
 #define RMAXCUT_H
 
 #include <stdint.h>
+#include <stdio.h>
 
 typedef struct {
 	char *name;
+	int32_t w[2][2];
 	int8_t s;
 } mc_node_t;
 
@@ -34,6 +36,7 @@ extern int mc_verbose;
 
 mc_graph_t *mc_read(const char *fn);
 void mc_destroy(mc_graph_t *g);
+void mc_print_cut(FILE *fp, const mc_graph_t *g);
 
 void mc_opt_init(mc_opt_t *opt);
 void mc_solve(const mc_opt_t *opt, mc_graph_t *g);

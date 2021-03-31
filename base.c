@@ -126,6 +126,7 @@ mc_graph_t *mc_read(const char *fn)
 			g->edge[g->n_edge++].w = w;
 		}
 	}
+	free(str.s);
 	ks_destroy(ks);
 	gzclose(fp);
 	mc_sort(g);
@@ -140,7 +141,7 @@ void mc_destroy(mc_graph_t *g)
 {
 	uint32_t i;
 	for (i = 0; i < g->n_node; ++i) free(g->node[i].name);
-	free(g->node); free(g->edge); free(g->idx);
+	free(g->node); free(g->edge); free(g->idx); free(g->cc);
 	mc_s2i_destroy((mc_s2i_t*)g->h_name);
 	free(g);
 }
