@@ -100,6 +100,7 @@ typedef struct {
 	uint32_t *cc_node;
 	uint64_t *cc_edge;
 	uint64_t *idx;
+	uint32_t *bfs, *bfs_mark;
 	mc_edge_t *sub;
 	int8_t *s, *s_opt;
 } mc_svaux_t;
@@ -163,6 +164,8 @@ mc_svaux_t *mc_svaux_init(const mc_graph_t *g, uint64_t x, int32_t topn_pos, int
 	MC_CALLOC(b->s_opt, g->n_node);
 	b->sub = mc_topn(g, topn_pos, topn_neg, &b->n_sub);
 	b->idx = mc_index_core(b->sub, b->n_sub, g->n_node);
+	MC_MALLOC(b->bfs, g->n_node);
+	MC_MALLOC(b->bfs_mark, g->n_node);
 	return b;
 }
 
@@ -171,6 +174,7 @@ void mc_svaux_destroy(mc_svaux_t *b)
 	free(b->cc_edge); free(b->cc_node);
 	free(b->s); free(b->s_opt);
 	free(b->idx); free(b->sub);
+	free(b->bfs); free(b->bfs_mark);
 	free(b);
 }
 
@@ -218,6 +222,34 @@ int64_t mc_init_spin(const mc_opt_t *opt, const mc_graph_t *g, mc_svaux_t *b)
 		}
 	}
 	return mc_score(g, b);
+}
+
+static void mc_perturb_node(const mc_opt_t *opt, const mc_graph_t *g, mc_svaux_t *b, int32_t bfs_round)
+{
+	uint32_t i, k, n_bfs = 0, st, en, mark, r;
+	k = (uint32_t)(kr_drand_r(&b->x) * b->cc_size + .499);
+	k = (uint32_t)g->cc[b->cc_off + k];
+	b->x = kr_splitmix64(b->x);
+	mark = (uint32_t)b->x;
+	b->bfs[n_bfs++] = k, b->bfs_mark[k] = mark;
+	st = 0, en = n_bfs;
+	for (r = 0; r < bfs_round; ++r) {
+		for (i = st; i < en; ++i) {
+			uint32_t k = b->bfs[i];
+			uint32_t o = b->idx[k] >> 32;
+			uint32_t n = (uint32_t)b->idx[k], j;
+			for (j = 0; j < n; ++j) {
+				const mc_edge_t *e = &b->sub[o + j];
+				uint32_t t = (uint32_t)e->x;
+				if (b->bfs_mark[t] == mark) continue;
+				b->bfs[n_bfs++] = t;
+				b->bfs_mark[t] = mark;
+			}
+		}
+		st = en, en = n_bfs;
+	}
+	for (i = 0; i < n_bfs; ++i)
+		b->s[b->bfs[i]] *= -1;
 }
 
 static void mc_perturb(const mc_opt_t *opt, const mc_graph_t *g, mc_svaux_t *b)
@@ -279,7 +311,8 @@ uint32_t mc_solve_cc(const mc_opt_t *opt, const mc_graph_t *g, mc_svaux_t *b, ui
 	for (j = 0; j < b->cc_size; ++j)
 		b->s_opt[b->cc_node[j]] = b->s[b->cc_node[j]];
 	for (k = 0; k < opt->n_perturb; ++k) {
-		mc_perturb(opt, g, b);
+		if (k&1) mc_perturb(opt, g, b);
+		else mc_perturb_node(opt, g, b, 3);
 		sc = mc_optimize_local(opt, g, b, &n_iter);
 		if (sc > sc_opt) {
 			for (j = 0; j < b->cc_size; ++j)
