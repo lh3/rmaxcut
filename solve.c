@@ -31,7 +31,7 @@ static void ks_shuffle_uint32_t(size_t n, uint32_t a[], uint64_t *x)
 void mc_opt_init(mc_opt_t *opt)
 {
 	memset(opt, 0, sizeof(mc_opt_t));
-	opt->topn_pos = opt->topn_neg = -1;
+	opt->topn_pos = opt->topn_neg = 1000000000;
 	opt->n_perturb = 2000;
 	opt->f_perturb = 0.1;
 	opt->max_iter = 1000;
