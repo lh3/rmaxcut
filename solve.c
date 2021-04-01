@@ -247,6 +247,7 @@ static void mc_perturb_node(const mc_opt_t *opt, const mc_graph_t *g, mc_svaux_t
 			}
 		}
 		st = en, en = n_bfs;
+//		if ((double)n_bfs > b->cc_size * opt->f_perturb) break;
 	}
 	for (i = 0; i < n_bfs; ++i)
 		b->s[b->bfs[i]] *= -1;
