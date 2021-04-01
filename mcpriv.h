@@ -14,5 +14,6 @@
 	} while (0)
 
 void radix_sort_mc64(uint64_t*, uint64_t*);
+uint64_t *mc_index_core(const mc_edge_t *edge, uint32_t n_edge, uint32_t n_node);
 
 #endif

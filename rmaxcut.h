@@ -1,6 +1,8 @@
 #ifndef RMAXCUT_H
 #define RMAXCUT_H
 
+#define MC_VERSION "0.0.0-dirty"
+
 #include <stdint.h>
 #include <stdio.h>
 
@@ -26,7 +28,8 @@ typedef struct {
 } mc_graph_t;
 
 typedef struct {
-	int32_t topn;
+	int32_t topn_pos, topn_neg;
+	int32_t max_iter;
 	int32_t n_perturb;
 	double f_perturb;
 	uint64_t seed;
@@ -35,6 +38,7 @@ typedef struct {
 extern int mc_verbose;
 
 mc_graph_t *mc_read(const char *fn);
+void mc_index(mc_graph_t *g);
 void mc_destroy(mc_graph_t *g);
 void mc_print_cut(FILE *fp, const mc_graph_t *g);
 
@@ -42,5 +46,7 @@ void mc_opt_init(mc_opt_t *opt);
 void mc_solve(const mc_opt_t *opt, mc_graph_t *g);
 
 double mc_realtime(void);
+double mc_cputime(void);
+long mc_peakrss(void);
 
 #endif

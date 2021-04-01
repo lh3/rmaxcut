@@ -72,18 +72,25 @@ void mc_merge_dup(mc_graph_t *g) // MUST BE sorted
 	MC_REALLOC(g->edge, g->m_edge);
 }
 
-void mc_index(mc_graph_t *g) // MUST BE sorted
+uint64_t *mc_index_core(const mc_edge_t *edge, uint32_t n_edge, uint32_t n_node) // MUST BE sorted
 {
 	uint32_t i, st;
-	free(g->idx);
-	MC_CALLOC(g->idx, g->n_node);
-	for (st = 0, i = 1; i <= g->n_edge; ++i) {
-		if (i == g->n_edge || g->edge[i].x>>32 != g->edge[st].x>>32) {
-			uint32_t t = g->edge[st].x>>32;
-			g->idx[t] = (uint64_t)st << 32 | (i - st);
+	uint64_t *idx;
+	MC_CALLOC(idx, n_node);
+	for (st = 0, i = 1; i <= n_edge; ++i) {
+		if (i == n_edge || edge[i].x>>32 != edge[st].x>>32) {
+			uint32_t t = edge[st].x>>32;
+			idx[t] = (uint64_t)st << 32 | (i - st);
 			st = i;
 		}
 	}
+	return idx;
+}
+
+void mc_index(mc_graph_t *g) // MUST BE sorted
+{
+	free(g->idx);
+	g->idx = mc_index_core(g->edge, g->n_edge, g->n_node);
 }
 
 mc_graph_t *mc_read(const char *fn)
