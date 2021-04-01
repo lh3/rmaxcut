@@ -216,9 +216,9 @@ int64_t mc_init_spin(const mc_opt_t *opt, const mc_graph_t *g, mc_svaux_t *b)
 			b->s[n1] = b->x&1? 1 : -1;
 			b->s[n2] = e->w > 0? -b->s[n1] : b->s[n1];
 		} else if (b->s[n1] == 0) {
-			b->s[n1] = e->w > 0? -b->s[n1] : b->s[n1];
+//			b->s[n1] = e->w > 0? -b->s[n2] : b->s[n2];
 		} else if (b->s[n2] == 0) {
-			b->s[n2] = -b->s[n1];
+//			b->s[n2] = e->w > 0? -b->s[n1] : b->s[n1];
 		}
 	}
 	return mc_score(g, b);
