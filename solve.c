@@ -124,6 +124,7 @@ mc_svaux_t *mc_svaux_init(const mc_graph_t *g, uint64_t x)
 	MC_MALLOC(b->bfs_mark, g->n_node);
 	MC_CALLOC(b->z, g->n_node);
 	MC_CALLOC(b->z_opt, g->n_node);
+	for (i = 0; i < g->n_node; ++i) b->bfs_mark[i] = (uint32_t)-1;
 	return b;
 }
 
