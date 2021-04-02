@@ -1,7 +1,7 @@
 #ifndef RMAXCUT_H
 #define RMAXCUT_H
 
-#define MC_VERSION "0.0.0-r17-dirty"
+#define MC_VERSION "0.0.0-r19-dirty"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -28,7 +28,6 @@ typedef struct {
 } mc_graph_t;
 
 typedef struct {
-	int32_t topn_pos, topn_neg;
 	int32_t max_iter;
 	int32_t n_perturb;
 	double f_perturb;
