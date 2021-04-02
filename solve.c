@@ -31,7 +31,7 @@ static void ks_shuffle_uint32_t(size_t n, uint32_t a[], uint64_t *x)
 void mc_opt_init(mc_opt_t *opt)
 {
 	memset(opt, 0, sizeof(mc_opt_t));
-	opt->n_perturb = 2000;
+	opt->n_perturb = 5000;
 	opt->f_perturb = 0.1;
 	opt->max_iter = 1000;
 	opt->seed = 11;
@@ -200,7 +200,7 @@ static void mc_perturb_node(const mc_opt_t *opt, const mc_graph_t *g, mc_svaux_t
 	uint32_t i, k, n_bfs = 0;
 	k = (uint32_t)(kr_drand_r(&b->x) * b->cc_size + .499);
 	k = (uint32_t)g->cc[b->cc_off + k];
-	n_bfs = mc_bfs(g, b, k, bfs_round, 0);
+	n_bfs = mc_bfs(g, b, k, bfs_round, (int32_t)(b->cc_size * opt->f_perturb));
 	for (i = 0; i < n_bfs; ++i)
 		b->s[b->bfs[i]] *= -1;
 }
