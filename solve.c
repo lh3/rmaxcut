@@ -173,14 +173,10 @@ int64_t mc_init_spin(const mc_opt_t *opt, const mc_graph_t *g, mc_svaux_t *b)
 	return mc_score(g, b);
 }
 
-static void mc_perturb_node(const mc_opt_t *opt, const mc_graph_t *g, mc_svaux_t *b, int32_t bfs_round)
+static uint32_t mc_bfs(const mc_graph_t *g, mc_svaux_t *b, uint32_t k0, int32_t bfs_round, uint32_t max_size)
 {
-	uint32_t i, k, n_bfs = 0, st, en, mark, r;
-	k = (uint32_t)(kr_drand_r(&b->x) * b->cc_size + .499);
-	k = (uint32_t)g->cc[b->cc_off + k];
-	b->x = kr_splitmix64(b->x);
-	mark = (uint32_t)b->x;
-	b->bfs[n_bfs++] = k, b->bfs_mark[k] = mark;
+	uint32_t i, n_bfs = 0, st, en, r;
+	b->bfs[n_bfs++] = k0, b->bfs_mark[k0] = k0;
 	st = 0, en = n_bfs;
 	for (r = 0; r < bfs_round; ++r) {
 		for (i = st; i < en; ++i) {
@@ -188,16 +184,23 @@ static void mc_perturb_node(const mc_opt_t *opt, const mc_graph_t *g, mc_svaux_t
 			uint32_t o = g->idx[k] >> 32;
 			uint32_t n = (uint32_t)g->idx[k], j;
 			for (j = 0; j < n; ++j) {
-				const mc_edge_t *e = &g->edge[o + j];
-				uint32_t t = (uint32_t)e->x;
-				if (b->bfs_mark[t] == mark) continue;
-				b->bfs[n_bfs++] = t;
-				b->bfs_mark[t] = mark;
+				uint32_t t = (uint32_t)g->edge[o + j].x;
+				if (b->bfs_mark[t] != k0)
+					b->bfs[n_bfs++] = t, b->bfs_mark[t] = k0;
 			}
 		}
 		st = en, en = n_bfs;
-//		if ((double)n_bfs > b->cc_size * opt->f_perturb) break;
+		if (max_size > 0 && n_bfs > max_size) break;
 	}
+	return n_bfs;
+}
+
+static void mc_perturb_node(const mc_opt_t *opt, const mc_graph_t *g, mc_svaux_t *b, int32_t bfs_round)
+{
+	uint32_t i, k, n_bfs = 0;
+	k = (uint32_t)(kr_drand_r(&b->x) * b->cc_size + .499);
+	k = (uint32_t)g->cc[b->cc_off + k];
+	n_bfs = mc_bfs(g, b, k, bfs_round, 0);
 	for (i = 0; i < n_bfs; ++i)
 		b->s[b->bfs[i]] *= -1;
 }
