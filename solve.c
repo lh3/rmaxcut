@@ -1,4 +1,5 @@
 #include <string.h>
+#include <assert.h>
 #include <stdio.h>
 #include "mcpriv.h"
 
@@ -92,6 +93,10 @@ void mc_find_cc(mc_graph_t *g)
 }
 
 typedef struct {
+	int64_t z[2];
+} mc_pairsc_t;
+
+typedef struct {
 	uint64_t x; // RNG
 	uint32_t cc_off, cc_size;
 	uint32_t n_cc_edge, m_cc_edge;
@@ -99,6 +104,7 @@ typedef struct {
 	uint32_t *cc_node;
 	uint64_t *cc_edge;
 	uint32_t *bfs, *bfs_mark;
+	mc_pairsc_t *z, *z_opt;
 	int8_t *s, *s_opt;
 } mc_svaux_t;
 
@@ -116,6 +122,8 @@ mc_svaux_t *mc_svaux_init(const mc_graph_t *g, uint64_t x)
 	MC_CALLOC(b->s_opt, g->n_node);
 	MC_MALLOC(b->bfs, g->n_node);
 	MC_MALLOC(b->bfs_mark, g->n_node);
+	MC_CALLOC(b->z, g->n_node);
+	MC_CALLOC(b->z_opt, g->n_node);
 	return b;
 }
 
@@ -123,8 +131,42 @@ void mc_svaux_destroy(mc_svaux_t *b)
 {
 	free(b->cc_edge); free(b->cc_node);
 	free(b->s); free(b->s_opt);
+	free(b->z); free(b->z_opt);
 	free(b->bfs); free(b->bfs_mark);
 	free(b);
+}
+
+void mc_reset_z(const mc_graph_t *g, mc_svaux_t *b)
+{
+	uint32_t i;
+	for (i = 0; i < b->cc_size; ++i) {
+		uint32_t k = (uint32_t)g->cc[b->cc_off + i];
+		uint32_t o = g->idx[k] >> 32;
+		uint32_t j, n = (uint32_t)g->idx[k];
+		b->z[k].z[0] = b->z[k].z[1] = 0;
+		for (j = 0; j < n; ++j) {
+			const mc_edge_t *e = &g->edge[o + j];
+			uint32_t t = (uint32_t)e->x;
+			if (b->s[t] > 0) b->z[k].z[0] += e->w;
+			else if (b->s[t] < 0) b->z[k].z[1] += e->w;
+		}
+	}
+}
+
+static void mc_set_spin(const mc_graph_t *g, mc_svaux_t *b, uint32_t k, int8_t s)
+{
+	uint32_t o, j, n;
+	int8_t s0 = b->s[k];
+	if (s0 == s) return;
+	o = g->idx[k] >> 32;
+	n = (uint32_t)g->idx[k];
+	for (j = 0; j < n; ++j) {
+		const mc_edge_t *e = &g->edge[o + j];
+		uint32_t t = (uint32_t)e->x;
+		if (s0 != 0) b->z[t].z[(s0 < 0)] -= e->w;
+		if (s  != 0) b->z[t].z[(s  < 0)] += e->w;
+	}
+	b->s[k] = s;
 }
 
 int64_t mc_score(const mc_graph_t *g, mc_svaux_t *b)
@@ -133,12 +175,7 @@ int64_t mc_score(const mc_graph_t *g, mc_svaux_t *b)
 	int64_t z = 0;
 	for (i = 0; i < b->cc_size; ++i) {
 		uint32_t k = (uint32_t)g->cc[b->cc_off + i];
-		uint32_t o = g->idx[k] >> 32;
-		uint32_t j, n = (uint32_t)g->idx[k];
-		for (j = 0; j < n; ++j) {
-			const mc_edge_t *e = &g->edge[o + j];
-			z += -b->s[e->x>>32] * b->s[(uint32_t)e->x] * e->w;
-		}
+		z += -b->s[k] * (b->z[k].z[0] - b->z[k].z[1]);
 	}
 	return z;
 }
@@ -170,6 +207,7 @@ int64_t mc_init_spin(const mc_opt_t *opt, const mc_graph_t *g, mc_svaux_t *b)
 			b->s[n2] = e->w > 0? -b->s[n1] : b->s[n1];
 		}
 	}
+	mc_reset_z(g, b);
 	return mc_score(g, b);
 }
 
@@ -202,7 +240,7 @@ static void mc_perturb_node(const mc_opt_t *opt, const mc_graph_t *g, mc_svaux_t
 	k = (uint32_t)g->cc[b->cc_off + k];
 	n_bfs = mc_bfs(g, b, k, bfs_round, (int32_t)(b->cc_size * opt->f_perturb));
 	for (i = 0; i < n_bfs; ++i)
-		b->s[b->bfs[i]] *= -1;
+		mc_set_spin(g, b, b->bfs[i], -b->s[b->bfs[i]]);
 }
 
 static void mc_perturb(const mc_opt_t *opt, const mc_graph_t *g, mc_svaux_t *b)
@@ -213,7 +251,7 @@ static void mc_perturb(const mc_opt_t *opt, const mc_graph_t *g, mc_svaux_t *b)
 		double y;
 		y = kr_drand_r(&b->x);
 		if (y < opt->f_perturb)
-			b->s[k] = -b->s[k];
+			mc_set_spin(g, b, k, -b->s[k]);
 	}
 }
 
@@ -226,20 +264,13 @@ static int64_t mc_optimize_local(const mc_opt_t *opt, const mc_graph_t *g, mc_sv
 		ks_shuffle_uint32_t(b->cc_size, b->cc_node, &b->x);
 		for (i = 0; i < b->cc_size; ++i) {
 			uint32_t k = b->cc_node[i];
-			uint32_t o = g->idx[k] >> 32;
-			uint32_t n = (uint32_t)g->idx[k], j;
-			int64_t z[2];
 			int8_t s;
-			z[0] = z[1] = 0;
-			for (j = 0; j < n; ++j) {
-				const mc_edge_t *e = &g->edge[o + j];
-				if (b->s[(uint32_t)e->x] > 0) z[0] += e->w;
-				else if (b->s[(uint32_t)e->x] < 0) z[1] += e->w;
+			if (b->z[k].z[0] == b->z[k].z[1]) continue;
+			s = b->z[k].z[0] > b->z[k].z[1]? -1 : 1;
+			if (b->s[k] != s) {
+				mc_set_spin(g, b, k, s);
+				++n_flip;
 			}
-			if (z[0] == z[1]) continue;
-			s = z[0] > z[1]? -1 : 1;
-			if (b->s[k] != s)
-				b->s[k] = s, ++n_flip;
 		}
 		++n_iter_local;
 		if (n_flip == 0) break;
@@ -261,19 +292,25 @@ uint32_t mc_solve_cc(const mc_opt_t *opt, const mc_graph_t *g, mc_svaux_t *b, ui
 
 	// optimize
 	sc_opt = mc_optimize_local(opt, g, b, &n_iter);
-	for (j = 0; j < b->cc_size; ++j)
+	for (j = 0; j < b->cc_size; ++j) {
 		b->s_opt[b->cc_node[j]] = b->s[b->cc_node[j]];
+		b->z_opt[b->cc_node[j]] = b->z[b->cc_node[j]];
+	}
 	for (k = 0; k < opt->n_perturb; ++k) {
 		if (k&1) mc_perturb(opt, g, b);
 		else mc_perturb_node(opt, g, b, 3);
 		sc = mc_optimize_local(opt, g, b, &n_iter);
 		if (sc > sc_opt) {
-			for (j = 0; j < b->cc_size; ++j)
+			for (j = 0; j < b->cc_size; ++j) {
 				b->s_opt[b->cc_node[j]] = b->s[b->cc_node[j]];
+				b->z_opt[b->cc_node[j]] = b->z[b->cc_node[j]];
+			}
 			sc_opt = sc;
 		} else {
-			for (j = 0; j < b->cc_size; ++j)
+			for (j = 0; j < b->cc_size; ++j) {
 				b->s[b->cc_node[j]] = b->s_opt[b->cc_node[j]];
+				b->z[b->cc_node[j]] = b->z_opt[b->cc_node[j]];
+			}
 		}
 	}
 	for (j = 0; j < b->cc_size; ++j)

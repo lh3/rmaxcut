@@ -1,7 +1,7 @@
 #ifndef RMAXCUT_H
 #define RMAXCUT_H
 
-#define MC_VERSION "0.0.0-r22-dirty"
+#define MC_VERSION "0.0.0-r23-dirty"
 
 #include <stdint.h>
 #include <stdio.h>
