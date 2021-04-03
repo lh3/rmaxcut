@@ -32,7 +32,7 @@ static void ks_shuffle_uint32_t(size_t n, uint32_t a[], uint64_t *x)
 void mc_opt_init(mc_opt_t *opt)
 {
 	memset(opt, 0, sizeof(mc_opt_t));
-	opt->n_perturb = 5000;
+	opt->n_perturb = 10000;
 	opt->f_perturb = 0.1;
 	opt->max_iter = 1000;
 	opt->seed = 11;
