@@ -18,6 +18,8 @@ rmaxcut -r20000 x-all.txt.gz > test.out 2> test.err
 ```
 It will take a couple of minutes on a single thread. Increasing option `-r`
 often leads to a better solution for the largest few connected components.
+Rmaxcut emits good enough solutions to problems at my hand. I haven't compared
+it to other more sophisticated max-cut solvers. Use with caution.
 
 ## Algorithms
 
