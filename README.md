@@ -1,8 +1,8 @@
 ## Introduction
 
 Rmaxcut finds an *approximate* solution to a weighted [max-cut][max-cut]
-problem via random perturbation. In the input file, each line gives the first
-nodeID, the second nodeID and an integer weight. The output gives
+problem via random perturbation. In the input file, each line shoudl provide
+the first nodeID, the second nodeID and an integer weight. The output gives
 ```txt
 N  nodeID   spin     w++  w+-  w-+  w--
 E  nodeID1  nodeID2  weight  spin1  spin2
