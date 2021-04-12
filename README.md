@@ -1,25 +1,27 @@
 ## Introduction
 
 Rmaxcut finds an *approximate* solution to a weighted [max-cut][max-cut]
-problem via random perturbation. In the input file, each line shoudl provide
+problem via random perturbation. Each line in an input file consists of
 the first nodeID, the second nodeID and an integer weight. The output gives
 ```txt
 N  nodeID   spin     w++  w+-  w-+  w--
 E  nodeID1  nodeID2  weight  spin1  spin2
 ```
 where `spin` is either 1 or -1, indicating the partition of `nodeID`. On an
-N-line, `w++` is the sum of positive weights of neighbors with positive spins.
-These `w**` numbers are mostly for debugging purposes.
+N-line, `w++` is the sum of positive weights of neighbors with positive spins;
+other `w**` numbers are similar.  These numbers are mostly for debugging
+purposes.
 
 To try rmaxcut, you may acquire `x-all.txt.gz` from the [download
 page][download] and run
 ```sh
 rmaxcut -r20000 x-all.txt.gz > test.out 2> test.err
 ```
-It will take a couple of minutes on a single thread. Increasing option `-r`
-often leads to a better solution for the largest few connected components.
-Rmaxcut emits good enough solutions to problems at my hand. I haven't compared
-it to other more sophisticated max-cut solvers. Use with caution.
+It will take a couple of minutes on a single thread. Increasing option `-r`,
+the number of iterations, often leads to a better solution for the largest few
+connected components. Rmaxcut emits good enough solutions to problems at my
+hand. I haven't compared it to other more sophisticated max-cut solvers. Use
+with caution.
 
 ## Algorithms
 
