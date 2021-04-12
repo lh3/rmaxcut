@@ -34,9 +34,10 @@ It uses a fairly naive algorithm:
    each node.
 3. For each node, flip its spin if doing that increases the weight. Repeat
    until the total weight can't be improved this way. This is a local maximum.
-4. Randomly flip 10% of spins, or flip the spins of the nodes within a distance
-   from a random node. Do step 3 again. If the new local maximum is better, do
-   step 4 on the new state; otherwise, do step 4 on the old state.
+4. Randomly flip 10% of spins, or flip the spins of nodes within a certain
+   distance from a random node (done by [BFS][bfs]). Do step 3 again. If the
+   new local maximum is better, do step 4 on the new state; otherwise, do step
+   4 on the old state.
 5. Repeat 3-4 for many times. Then move to the next component.
 
 The algorithm is akin to [simulated annealing][sa] but without proper annealing.
@@ -48,3 +49,4 @@ Monte Carlo methods. This may speed up heuristic search.
 [ising]: https://en.wikipedia.org/wiki/Ising_model#Connection_to_graph_maximum_cut
 [sa]: https://en.wikipedia.org/wiki/Simulated_annealing
 [download]: https://github.com/lh3/rmaxcut/releases/tag/data1
+[bfs]: https://en.wikipedia.org/wiki/Breadth-first_search
