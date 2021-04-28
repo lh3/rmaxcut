@@ -237,7 +237,7 @@ static uint32_t mc_bfs(const mc_graph_t *g, mc_svaux_t *b, uint32_t k0, int32_t 
 static void mc_perturb_node(const mc_opt_t *opt, const mc_graph_t *g, mc_svaux_t *b, int32_t bfs_round)
 {
 	uint32_t i, k, n_bfs = 0;
-	k = (uint32_t)(kr_drand_r(&b->x) * b->cc_size + .499);
+	k = (uint32_t)(kr_drand_r(&b->x) * b->cc_size);
 	k = (uint32_t)g->cc[b->cc_off + k];
 	n_bfs = mc_bfs(g, b, k, bfs_round, (int32_t)(b->cc_size * opt->f_perturb));
 	for (i = 0; i < n_bfs; ++i)
